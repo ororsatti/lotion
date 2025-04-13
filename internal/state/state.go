@@ -24,7 +24,6 @@ func init() {
 
 	lotionPath = filepath.Join(user.HomeDir, LotionDir)
 
-	fmt.Println(lotionPath)
 	if !isDirExists(lotionPath) {
 		err = os.Mkdir(lotionPath, os.ModePerm)
 		if err != nil {
@@ -56,4 +55,52 @@ func IsNoteExist(notebook, noteName string) bool {
 func CreateNote(notebook, noteName string) error {
 	_, err := os.Create(GetNotePath(notebook, noteName))
 	return err
+}
+
+func GetLotionPath() string {
+	return lotionPath
+}
+
+func GetAllNotes() (map[string][]string, error) {
+	notebooks, err := os.ReadDir(lotionPath)
+	notebooksToNotesMap := make(map[string][]string)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dirEntry := range notebooks {
+		if !dirEntry.IsDir() {
+			continue
+		}
+
+		path := path.Join(lotionPath, dirEntry.Name())
+
+		notes, err := getNoteNames(path)
+		if err != nil {
+			continue
+		}
+
+		notebooksToNotesMap[dirEntry.Name()] = notes
+	}
+
+	return notebooksToNotesMap, nil
+}
+
+func getNoteNames(notebookPath string) ([]string, error) {
+	var noteNames []string
+
+	entries, err := os.ReadDir(notebookPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			return nil, fmt.Errorf("Error: %s can not be a directory", entry.Name())
+		}
+
+		noteNames = append(noteNames, removeNotePrefix(entry.Name()))
+	}
+
+	return noteNames, nil
 }

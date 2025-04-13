@@ -3,6 +3,7 @@ package state
 import (
 	"errors"
 	"os"
+	"strings"
 )
 
 func isDirExists(path string) bool {
@@ -21,4 +22,8 @@ func isFileExists(path string) bool {
 	}
 
 	return true
+}
+
+func removeNotePrefix(noteName string) string {
+	return strings.Split(noteName, ".")[0]
 }
