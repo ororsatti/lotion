@@ -9,6 +9,7 @@ type CommandName string
 const (
 	NewNote    CommandName = "new"
 	SearchNote CommandName = "search"
+	Sync       CommandName = "sync"
 )
 
 type Command interface {
@@ -19,6 +20,7 @@ type Command interface {
 var commandConstructors = map[CommandName]func(args []string) (Command, error){
 	NewNote:    CreateNewCommand,
 	SearchNote: CreateSearchCommand,
+	Sync:       CreateSyncCommand,
 }
 
 func CreateCommand(argsWithoutSubcommand []string, name CommandName) (Command, error) {
