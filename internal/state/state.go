@@ -14,6 +14,8 @@ const (
 
 var lotionPath string
 
+type NotebooksMap map[string][]string
+
 func init() {
 	user, err := user.Current()
 	if err != nil {
@@ -61,7 +63,7 @@ func GetLotionPath() string {
 	return lotionPath
 }
 
-func GetAllNotes() (map[string][]string, error) {
+func GetAllNotes() (NotebooksMap, error) {
 	notebooks, err := os.ReadDir(lotionPath)
 	notebooksToNotesMap := make(map[string][]string)
 	if err != nil {
@@ -99,7 +101,7 @@ func getNoteNames(notebookPath string) ([]string, error) {
 			return nil, fmt.Errorf("Error: %s can not be a directory", entry.Name())
 		}
 
-		noteNames = append(noteNames, removeNotePrefix(entry.Name()))
+		noteNames = append(noteNames, entry.Name())
 	}
 
 	return noteNames, nil

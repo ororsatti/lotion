@@ -7,9 +7,9 @@ import (
 type CommandName string
 
 const (
-	NewNote    CommandName = "new"
-	SearchNote CommandName = "search"
-	Sync       CommandName = "sync"
+	NewNote   CommandName = "new"
+	ListNotes CommandName = "list"
+	Sync      CommandName = "sync"
 )
 
 type Command interface {
@@ -18,9 +18,9 @@ type Command interface {
 }
 
 var commandConstructors = map[CommandName]func(args []string) (Command, error){
-	NewNote:    CreateNewCommand,
-	SearchNote: CreateSearchCommand,
-	Sync:       CreateSyncCommand,
+	NewNote:   CreateNewCommand,
+	ListNotes: CreateListCommand,
+	Sync:      CreateSyncCommand,
 }
 
 func CreateCommand(argsWithoutSubcommand []string, name CommandName) (Command, error) {
