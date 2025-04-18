@@ -19,7 +19,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	cmd.Debug()
 	err = cmd.Execute()
 	if err != nil {
 		fmt.Println(err)

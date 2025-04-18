@@ -2,14 +2,19 @@ package commands
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"lotion/internal/state"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 )
 
+const defaultRemoteName = "origin"
+
 type SyncCommand struct {
-	repo *git.Repository
+	repo      *git.Repository
+	remoteURL string
 }
 
 func (cmd SyncCommand) Execute() error {
@@ -17,42 +22,23 @@ func (cmd SyncCommand) Execute() error {
 }
 
 func (cmd SyncCommand) Debug() {
-	fmt.Printf("Running Sync command")
 }
 
 func (cmd SyncCommand) execute() error {
-	w, err := cmd.repo.Worktree()
-	if err != nil {
-		return err
+	if cmd.remoteURL != "" {
+		return cmd.setRemote(cmd.remoteURL)
 	}
 
-	s, err := w.Status()
-	if err != nil {
-		return err
-	}
-
-	for filePath, status := range s {
-		if !isUnstagedStatus(status.Staging) {
-			continue
-		}
-
-		w.Add(filePath)
-	}
-
-	commitMsg := fmt.Sprintf("changes in %d notes", len(s))
-
-	commitHash, err := w.Commit(commitMsg, &git.CommitOptions{All: true})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(commitHash.String())
-
-	return nil
+	return cmd.performSync()
 }
 
 func CreateSyncCommand(args []string) (Command, error) {
 	syncCmd, err := initSyncCommand()
+
+	fs := flag.NewFlagSet(string(Sync), flag.ContinueOnError)
+	fs.StringVar(&syncCmd.remoteURL, "remote", "", "set remote URL")
+
+	err = fs.Parse(args)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +74,52 @@ func openOrInitRepo(path string) (*git.Repository, error) {
 	}
 
 	return repo, nil
+}
+
+func (cmd SyncCommand) setRemote(remoteURL string) error {
+	_, err := cmd.repo.CreateRemote(&config.RemoteConfig{
+		Name: defaultRemoteName,
+		URLs: []string{remoteURL},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cmd SyncCommand) performSync() error {
+	w, err := cmd.repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	s, err := w.Status()
+	if err != nil {
+		return err
+	}
+
+	for filePath, status := range s {
+		if !isUnstagedStatus(status.Staging) {
+			continue
+		}
+
+		w.Add(filePath)
+	}
+
+	commitMsg := fmt.Sprintf("changes in %d notes", len(s))
+
+	_, err = w.Commit(commitMsg, &git.CommitOptions{All: true})
+	if err != nil {
+		return err
+	}
+
+	err = cmd.repo.Push(&git.PushOptions{RemoteName: defaultRemoteName})
+	if errors.Is(err, git.NoErrAlreadyUpToDate) {
+		return nil
+	}
+
+	return err
 }
 
 func isUnstagedStatus(s git.StatusCode) bool {
