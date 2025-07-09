@@ -1,12 +1,12 @@
 package commands
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"lotion/internal/state"
 	"os"
 	"os/exec"
+	"time"
 )
 
 type NewCommand struct {
@@ -35,7 +35,7 @@ func CreateNewCommand(args []string) (Command, error) {
 
 	cmd.noteName = flag.Arg(0)
 	if cmd.noteName == "" {
-		return nil, errors.New("note name can not be nil")
+		cmd.noteName = time.Now().Format(time.DateOnly)
 	}
 
 	return cmd, nil
